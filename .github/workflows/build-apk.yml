@@ -70,7 +70,6 @@ jobs:
         run: |
           if [ ! -f "dist/index.html" ]; then
             echo "ERROR: dist/index.html was not generated"
-            echo "Available files:"
             find . -maxdepth 3 -type f | sort
             exit 1
           fi
@@ -85,7 +84,12 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
+
+      - name: Verify Java
+        run: |
+          java -version
+          javac -version
 
       - name: Configure Android SDK
         shell: bash
