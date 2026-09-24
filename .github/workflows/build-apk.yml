@@ -20,18 +20,61 @@ jobs:
         run: |
           rm -rf project
           mkdir -p project
-          unzip -o zapple-project.zip -d project
+
+          ZIP_FILE=$(find . -maxdepth 1 -type f -iname "*.zip" | head -n 1)
+
+          if [ -z "$ZIP_FILE" ]; then
+            echo "ERROR: No ZIP project file found"
+            exit 1
+          fi
+
+          echo "Using project ZIP: $ZIP_FILE"
+          unzip -o "$ZIP_FILE" -d project
 
           if [ -f "project/package.json" ]; then
             cp -a project/. .
           else
-            PROJECT_DIR=$(find project -maxdepth 2 -name package.json -printf '%h\n' | head -n 1)
+            PROJECT_DIR=$(find project -maxdepth 3 -name package.json -printf '%h\n' | head -n 1)
+
             if [ -z "$PROJECT_DIR" ]; then
               echo "ERROR: package.json not found"
               exit 1
             fi
+
             cp -a "$PROJECT_DIR"/. .
           fi
+
+      - name: Check project
+        shell: bash
+        run: |
+          echo "Project files:"
+          ls -la
+
+          if [ ! -f package.json ]; then
+            echo "ERROR: package.json not found"
+            exit 1
+          fi
+
+          if [ ! -d android ]; then
+            echo "ERROR: android directory not found"
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install JavaScript dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Sync Capacitor Android project
+        run: npx cap sync android
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -43,7 +86,9 @@ jobs:
         shell: bash
         run: |
           SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" \
-            -type f -name sdkmanager 2>/dev/null | sort -V | tail -n 1)
+            -type f \
+            -name sdkmanager \
+            2>/dev/null | sort -V | tail -n 1)
 
           if [ -z "$SDKMANAGER" ]; then
             echo "ERROR: sdkmanager not found"
@@ -65,8 +110,13 @@ jobs:
 
       - name: Check APK
         run: |
+          echo "Checking APK..."
           ls -lh android/app/build/outputs/apk/debug/
+
           test -f android/app/build/outputs/apk/debug/app-debug.apk
+
+          echo "APK successfully created:"
+          ls -lh android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
