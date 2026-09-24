@@ -1,4 +1,4 @@
-'npm': Build Zapple APK
+name: Build Zapple APK
 
 on:
   workflow_dispatch:
@@ -8,8 +8,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
     steps:
       - name: Checkout repository
@@ -44,7 +44,7 @@ jobs:
       - name: Configure Android SDK
         shell: bash
         run: |
-          SDKMANAGER=$(find "$ANDROID_SDK_ROOT/cmdline-tools" \
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" \
             -type f -name sdkmanager 2>/dev/null | sort -V | tail -n 1)
 
           if [ -z "$SDKMANAGER" ]; then
