@@ -26,12 +26,10 @@ jobs:
             cp -a project/. .
           else
             PROJECT_DIR=$(find project -maxdepth 2 -name package.json -printf '%h\n' | head -n 1)
-
             if [ -z "$PROJECT_DIR" ]; then
               echo "ERROR: package.json not found"
               exit 1
             fi
-
             cp -a "$PROJECT_DIR"/. .
           fi
 
@@ -56,41 +54,23 @@ jobs:
 
           "$SDKMANAGER" \
             "platform-tools" \
-            "platforms;android-36" \
-            "build-tools;36.0.0"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build web app
-        run: npm run build
-
-      - name: Sync Capacitor
-        run: npx cap sync android
+            "platforms;android-35" \
+            "build-tools;35.0.0"
 
       - name: Build APK
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew :app:assembleDebug --stacktrace --no-daemon
 
       - name: Check APK
         run: |
           ls -lh android/app/build/outputs/apk/debug/
           test -f android/app/build/outputs/apk/debug/app-debug.apk
 
-      - name: Rename APK
-        run: |
-          cp android/app/build/outputs/apk/debug/app-debug.apk zapple.apk
-
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: zapple-apk
-          path: zapple.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
